@@ -15,8 +15,8 @@ public class AtmDemo {
         return balance - amount;
     }
 
-    private static void run(String label, String input) {
-        System.out.println("[" + label + "]");
+    private static void run(String input) {
+        System.out.println("Input: " + input);
         try (Scanner scanner = new Scanner(input)) {
             int account = scanner.nextInt();
             double amount = scanner.nextDouble();
@@ -38,10 +38,29 @@ public class AtmDemo {
     }
 
     public static void main(String[] args) {
-        run("valid", "101 250");
-        run("letters", "abc 250");
-        run("negative", "101 -5");
-        run("over balance", "101 1500");
-        run("missing reader", "101 0");
+        try (Scanner input = new Scanner(System.in)) {
+            while (input.hasNextLine()) {
+                String line = input.nextLine().trim();
+                if (!line.isEmpty()) run(line);
+            }
+        }
+        long thrown = 0, returned = 0;
+        for (int repeat = 0; repeat < 3; repeat++) {
+            long start = System.nanoTime();
+            for (int i = 0; i < 100000; i++) {
+                try { throw new IllegalArgumentException("bad amount"); }
+                catch (IllegalArgumentException ignored) { }
+            }
+            thrown += System.nanoTime() - start;
+            start = System.nanoTime();
+            for (int i = 0; i < 100000; i++) {
+                if (errorCode(-1) == -1) { }
+            }
+            returned += System.nanoTime() - start;
+        }
+        System.out.println("Average 100000 throws ns=" + thrown / 3
+                + ", error-code returns ns=" + returned / 3);
     }
+
+    private static int errorCode(double amount) { return amount < 0 ? -1 : 0; }
 }

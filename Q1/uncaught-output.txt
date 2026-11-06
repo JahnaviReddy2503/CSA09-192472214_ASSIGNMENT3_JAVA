@@ -1,0 +1,2 @@
+Exception in thread "main" java.lang.IllegalStateException: uncaught demonstration
+	at UncaughtAtmDemo.main(UncaughtAtmDemo.java:3)

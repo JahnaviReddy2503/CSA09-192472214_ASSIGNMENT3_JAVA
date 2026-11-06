@@ -1,12 +1,12 @@
 # Q1 – ATM Withdrawal
 
 ## 1. Problem summary
-The ATM validates an account and amount, then withdraws from a fixed balance. It
-illustrates input, argument, custom checked, and file exceptions.
+`AtmDemo` reads one case per line from `input.txt`, validates an account and
+amount, and demonstrates input, argument, custom checked, and file failures.
 
 ## 2. Shared Group Work
-`AtmDemo` uses try-with-resources, multi-catch, ordered catches, and `finally`.
-The custom checked exception is in `InsufficientFundsException.java`.
+The program uses `try`, multi-catch, ordered catches, and `finally`. The real
+run handled five cases and captured the result in `output.txt`.
 
 ## Student A
 ```text
@@ -17,38 +17,38 @@ Throwable
     └── checked (InsufficientFundsException, FileNotFoundException)
 ```
 
-| Failure | Type | Checked? | Catch |
+| Failure point | Exception | Checked? | Catch |
 |---|---|---|---|
-| letters | InputMismatchException | No | multi-catch |
-| negative | IllegalArgumentException | No | argument catch |
-| over balance | InsufficientFundsException | Yes | custom catch |
-| missing reader | FileNotFoundException | Yes | file catch |
+| letters | InputMismatchException | unchecked | multi-catch |
+| negative amount | IllegalArgumentException | unchecked | argument catch |
+| amount over balance | InsufficientFundsException | checked | custom catch |
+| missing card reader | FileNotFoundException | checked | file catch |
 
-Specific catches precede broad catches because a superclass catch would make a
-later subclass catch unreachable. `finally` executes after success or handled
-failure (apart from abnormal JVM termination).
+Narrow catches precede broad catches; otherwise the compiler reports
+`exception FileNotFoundException has already been caught`. `finally` runs after
+normal completion or a handled exception, except for abnormal JVM termination.
 
 ## Student B
 
-| Input | Catch block | Finally |
+| Input | Catch hit | Finally |
 |---|---|---|
 | `101 250` | none | yes |
 | `abc 250` | multi-catch | yes |
 | `101 -5` | IllegalArgumentException | yes |
-| `101 1500` | custom | yes |
+| `101 1500` | InsufficientFundsException | yes |
 | `101 0` | FileNotFoundException | yes |
 
-An uncaught exception would print its class, message, and stack frames from the
-throw site back through the caller. A broad `catch (Exception e)` before a
-narrow catch produces the compiler error `exception ... has already been caught`.
+`uncaught-output.txt` is a real stack trace: the exception header identifies the
+type/message, and `UncaughtAtmDemo.java:3` identifies the throw line. The
+broader-before-narrower example is in `BroadCatchBeforeNarrower.java` comments.
 
-## Joint question
-One `Exception` catch is acceptable at an application boundary for logging and
-safe user feedback, but it loses precise recovery and can hide programming bugs.
+## Joint answer
+A single `catch (Exception e)` is acceptable at an application boundary for
+logging and safe feedback, but loses precise recovery and can hide programming
+errors.
 
 ## Alternative Concept and Complexity Analysis
-`hasNextInt()` and explicit error codes avoid throwing but require checks at every
-failure point. Both approaches are O(1) per withdrawal and O(1) space. Exception
-construction captures a stack trace and is measurably more expensive than a
-return code; timings are intentionally not hard-coded and can be collected with
-`System.nanoTime()` on the target machine.
+`hasNextInt()` plus `-1` error codes needs explicit checks at every input point;
+both approaches are O(1) time and O(1) space per case. The captured three-run
+benchmark averaged **38,758,166 ns** for 100,000 throws versus **67,800 ns** for
+100,000 error-code returns. This measures this JVM run, not a universal value.

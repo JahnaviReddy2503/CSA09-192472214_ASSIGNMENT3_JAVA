@@ -1,0 +1,9 @@
+// Rename to BroaderFirstCompileError.java and compile to see:
+// error: exception FileNotFoundException has already been caught
+class BroaderFirstCompileError {
+    void example() {
+        try { throw new java.io.FileNotFoundException(); }
+        catch (Exception e) { }
+        catch (java.io.FileNotFoundException e) { }
+    }
+}
