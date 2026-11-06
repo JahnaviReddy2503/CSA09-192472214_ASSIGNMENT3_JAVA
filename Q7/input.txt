@@ -1,0 +1,1 @@
+fileCount=10000 corruptEvery=50 missingEvery=75 poolSizes=1,2,4,8

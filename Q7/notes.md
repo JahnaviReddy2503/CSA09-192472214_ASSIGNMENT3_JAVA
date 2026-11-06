@@ -1,33 +1,48 @@
-# Q7 – Concurrent, Fault-Tolerant Processor
+# Q7 – Concurrent Fault-Tolerant Processor
 
 ## 1. Problem summary
-The generator creates 10,000 score files, including corrupt, out-of-range, and
-missing inputs. Each `Callable<Result>` catches its own failures.
+The generator creates 10,000 score paths with corrupt and missing inputs.
+Callable tasks return a `Result` instead of allowing one bad file to abort the run.
 
 ## 2. Shared Group Work
-`ExecutorService` and `Future<Result>` process all files. A
-`ConcurrentLinkedQueue` preserves every result without requiring a shared
-mutable counter. The invariant is successes + failures = 10,000.
+The run used `fileCount=10000`, `corruptEvery=50`, `missingEvery=75`, and pools
+1, 2, 4, 8. `ConcurrentLinkedQueue` stores one result per submitted path.
 
 ## Student A
-Design: Controller → fixed ExecutorService → Callable task → `Result`; each task
-maps missing, invalid, I/O, and range failures to a reason. The queue is
-appropriate because each result is appended once and final aggregation is a
-linear scan.
+```text
+Controller -> ExecutorService -> Callable<Result> -> process(file)
+                                      |
+                              ConcurrentLinkedQueue
+```
+Pseudocode: submit one callable per expected filename; each catches missing,
+non-numeric, range, and I/O errors; collect every Future; aggregate by reason.
+The queue suits append-only concurrent result collection.
 
 ## Student B
-The program measures pools 1, 2, 4, and 8 on the actual machine and injects
-corrupt and missing files. A single failure is returned, never thrown through
-the whole run. Exact times are emitted by the run, not fabricated here.
 
-## Joint question
-Pool size 2–4 is often a reasonable I/O compromise; more threads can add
-context switching and disk contention. Complete collection of one result per
-submitted file guarantees a complete summary. A remaining limitation is that
-the input directory can change during processing.
+| Pool | Average of 3 runs (ms) | Successes | Failures |
+|---:|---:|---:|---:|
+| 1 | 548 | 9,733 | 267 |
+| 2 | 231 | 9,733 | 267 |
+| 4 | 150 | 9,733 | 267 |
+| 8 | 130 | 9,733 | 267 |
+
+Final reasons were `missing=133`, `non-numeric=134`; success + failure =
+`9733 + 267 = 10000`. The ten-file hand check expected seven successes and
+observed seven, with one each missing, non-numeric, and out-of-range. No failure
+escaped task handling.
+
+## Joint answer
+The shared design meets the measurable requirement: every expected path produces
+one result and no task failure aborts the run.
+
+## Stage 4 – Joint
+Pool 4 is a reasonable I/O compromise for this run; more workers can cause disk
+contention and context switching. One result per submitted path makes the
+summary complete. A limitation is that files can change while processing.
 
 ## Alternative Concept and Complexity Analysis
-`parallelStream()` offers less explicit lifecycle control; one bad unchecked
-exception can fail the aggregate unless handled inside the lambda. One-thread
-per-file uses O(n) stacks, while the pool uses O(p) worker stacks. Processing is
-O(n) tasks and O(n) result storage.
+`parallelStream()` also returned 9,733 successes and 267 failures and measured
+**214 ms**. Its lambda still catches errors through `process`. A one-thread-per-
+file design would use O(n) stacks, versus O(p) worker stacks for a fixed pool;
+processing and result storage are O(n).
