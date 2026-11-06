@@ -16,7 +16,8 @@ public class ExamPortalDemo {
     static class Storage {
         void save(String file) throws SubmissionStorageException {
             try {
-                if (file.contains("quota")) throw new java.io.IOException("Disk quota exceeded");
+                if (file.contains("quota") || file.equals("answer02.pdf"))
+                    throw new java.io.IOException("Disk quota exceeded");
                 System.out.println("Saved " + file);
             } catch (java.io.IOException e) {
                 throw new SubmissionStorageException("Could not store " + file, e);
@@ -46,9 +47,25 @@ public class ExamPortalDemo {
     }
     public static void main(String[] args) {
         Controller c = new Controller();
-        c.handle("A", true, true, "answer01.pdf");
-        c.handle("B", false, true, "answer02.pdf");
-        c.handle("C", true, false, "answer03.pdf");
-        c.handle("D", true, true, "quota-answer04.pdf");
+        try (java.util.Scanner input = new java.util.Scanner(System.in)) {
+            while (input.hasNextLine()) {
+                String[] parts = input.nextLine().trim().split("\\s+");
+                if (parts.length < 4) continue;
+                c.handle(parts[0], Boolean.parseBoolean(parts[1]),
+                        Boolean.parseBoolean(parts[2]), parts[3]);
+            }
+        }
+        long noCause = 0, withCause = 0;
+        for (int repeat = 0; repeat < 3; repeat++) {
+            long start = System.nanoTime();
+            for (int i = 0; i < 100000; i++) new SubmissionStorageException("x", null);
+            noCause += System.nanoTime() - start;
+            start = System.nanoTime();
+            for (int i = 0; i < 100000; i++)
+                new SubmissionStorageException("x", new java.io.IOException("cause"));
+            withCause += System.nanoTime() - start;
+        }
+        System.out.println("Average 100000 exceptions ns: noCause=" + noCause / 3
+                + ", withCause=" + withCause / 3);
     }
 }

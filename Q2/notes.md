@@ -1,13 +1,12 @@
 # Q2 – Online Examination Portal
 
 ## 1. Problem summary
-The controller, service, and storage layers propagate meaningful checked
-exceptions. Storage wraps `IOException` while preserving it as the cause.
+Controller, Service, and Storage layers propagate meaningful checked exceptions.
+Storage wraps `IOException` as `SubmissionStorageException` and preserves its cause.
 
 ## 2. Shared Group Work
-`ExamException` is the checked root; its three subclasses model recoverable
-exam-domain failures. The controller is the UI boundary and always runs
-`finally`.
+`ExamPortalDemo` reads four scenarios from `input.txt`; `StorageDemo` produces the
+required save/error/cause lines and a full chained stack trace.
 
 ## Student A
 ```text
@@ -16,26 +15,31 @@ ExamException
 ├── StudentNotRegisteredException
 └── SubmissionStorageException
 ```
-Checked exceptions force callers to acknowledge failures that can be recovered
-from. An invalid argument would be an unchecked `IllegalArgumentException`.
-The path is Storage IOException → SubmissionStorageException → Service →
-Controller. The student sees the wrapper message, while logs can inspect cause.
+These are checked because callers can recover or report them. A programming
+precondition such as a null argument would normally be unchecked. The path is
+Storage `IOException` → `SubmissionStorageException` → Service → Controller;
+Controller catches it and `finally` prints `Request finished`.
 
 ## Student B
-`ExamPortalDemo` runs registered/open, unregistered, closed-window, and quota
-scenarios. `StorageDemo` produces the required save/error/cause messages (plus
-the controller's request-completion line). Without passing `e` to the wrapper
-constructor, `getCause()` is null and `getCause().getMessage()` throws a
-`NullPointerException`; the chained stack trace would otherwise contain
-`Caused by: java.io.IOException`.
 
-## Joint question
-The domain exception prevents storage implementation details leaking into the
-UI and gives callers a stable recovery and user-facing message.
+| Scenario | Observed result |
+|---|---|
+| closed window | `ExamWindowClosedException` |
+| unregistered student | `StudentNotRegisteredException` |
+| large/quota file | `SubmissionStorageException`, cause `Disk quota exceeded` |
+| valid file | saved successfully |
+
+The output contains `Caused by: java.io.IOException`. `RethrowWithoutCauseDemo`
+prints `Cause is null: true`; calling `getCause().getMessage()` then causes a
+`NullPointerException`, and the original diagnostic context is lost.
+
+## Joint answer
+`SubmissionStorageException` gives the UI a stable domain message without
+exposing storage implementation details, while logs retain the original cause.
 
 ## Alternative Concept and Complexity Analysis
-Making the hierarchy extend `RuntimeException` removes `throws` declarations
-and compiler-enforced handling, but does not remove runtime failure. Each
-exception is O(1) space plus stack frames; a cause adds another throwable and
-its frames. Benchmark with `System.nanoTime()` on the target JVM rather than
-inventing timings.
+If the classes extended `RuntimeException`, `throws ExamException` declarations
+and mandatory caller catches could be removed; runtime failures would still
+occur. Construction is O(1) plus stack depth, and a cause retains another
+throwable/stack. The real portal benchmark averaged **30,521,133 ns** for
+100,000 no-cause exceptions and **61,387,233 ns** with causes.
