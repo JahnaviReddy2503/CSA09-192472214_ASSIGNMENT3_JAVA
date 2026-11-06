@@ -1,0 +1,6 @@
+store1.txt
+store2.txt
+store3.txt
+store4.txt
+store5.txt
+store-corrupt.txt

@@ -1,32 +1,32 @@
-# Q3 – Daily Sales Report Generator
+# Q3 – Daily Sales Report
 
 ## 1. Problem summary
-Six input files are read, one containing corrupt data. Manual closing and
-try-with-resources produce the same report in `summary.txt`.
+The program reads the five stores and one corrupt store listed in `input.txt`.
+Manual closing and try-with-resources produce identical reports in `summary.txt`.
 
 ## 2. Shared Group Work
-`SalesReportDemo` generates inputs, runs both versions, compares their strings,
-and writes the resource-safe report. A corrupt line is reported rather than
-aborting the complete run.
+`CountingReader` tracks opened/closed handles, logs the failing filename, compares
+both report strings in code, and demonstrates suppressed exceptions.
 
 ## Student A
-Breakpoints belong at file-open, each `readLine`, parse, catch, and close. A
-failure between open and `finally` close is the leak point in a version that
-does not close in `finally`; this implementation's `finally` closes every
-opened reader. Logging can record `file` in the catch block.
+Breakpoints: constructor/open, each `readLine`, `parseInt`, catch, and close.
+The corrupt file `store-corrupt.txt` fails at parsing. Real counts were manual
+`6/5` (one leaked handle) and try-with-resources `6/6`; logs name that file.
 
 ## Student B
-Every `FileReader` and `BufferedReader` must close. Try-with-resources closes
-resources in reverse declaration order, even during exceptions. Two
-AutoCloseables can print from `close()` to demonstrate this; close failures are
-available through `getSuppressed()`.
+The `FileReader` wrapped by `BufferedReader`/`CountingReader` is the resource and
+must close after each file. Manual code leaks when parsing throws before its
+explicit close. Try-with-resources closes automatically in reverse declaration
+order; the demo prints `close second` then `close first`. The suppressed demo
+reports `suppressed count=1`.
 
-## Joint question
-Try-with-resources does not make an incomplete output atomic, close
-non-AutoCloseable resources, or design retry/recovery logic. Use a temporary
-file and atomic move for complete reports.
+## Joint answer
+Try-with-resources does not make an output atomic, close non-`AutoCloseable`
+resources, or design retries. Temporary output plus atomic move is needed for a
+complete report.
 
 ## Alternative Concept and Complexity Analysis
-For `f` files, both approaches are O(f) (plus file bytes). Correct manual
-`finally` has at most one reader open; an unsafe no-close variant can hold O(f)
-handles. Try-with-resources is clearer and guarantees closure.
+For `f` files, both approaches are O(f) plus bytes read. Correct manual finally
+and try-with-resources hold O(1) handles; unsafe no-close code can hold O(f).
+The captured three-run averages were manual **1,281,133 ns** and
+try-with-resources **1,326,533 ns**.
