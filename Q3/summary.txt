@@ -1,0 +1,6 @@
+store1.txt: 30
+store2.txt: 60
+store3.txt: 90
+store4.txt: 120
+store5.txt: 150
+store-corrupt.txt: ERROR NumberFormatException
