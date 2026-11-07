@@ -5,8 +5,8 @@ Controller, Service, and Storage layers propagate meaningful checked exceptions.
 Storage wraps `IOException` as `SubmissionStorageException` and preserves its cause.
 
 ## 2. Shared Group Work
-`ExamPortalDemo` reads four scenarios from `input.txt`; `StorageDemo` produces the
-required save/error/cause lines and a full chained stack trace.
+`ExamPortalDemo` reads four scenarios from `input.txt`; `StorageDemo` produces
+exactly the required save/error/cause lines.
 
 ## Student A
 ```text
@@ -29,9 +29,10 @@ Controller catches it and `finally` prints `Request finished`.
 | large/quota file | `SubmissionStorageException`, cause `Disk quota exceeded` |
 | valid file | saved successfully |
 
-The output contains `Caused by: java.io.IOException`. `RethrowWithoutCauseDemo`
-prints `Cause is null: true`; calling `getCause().getMessage()` then causes a
-`NullPointerException`, and the original diagnostic context is lost.
+The portal output contains `Caused by: java.io.IOException`. The separate
+`RethrowWithoutCauseDemo` prints `Cause is null: true`; without a cause, a
+`Cause:` line would print no underlying message, and calling
+`getCause().getMessage()` produces the observed `NullPointerException`.
 
 ## Joint answer
 `SubmissionStorageException` gives the UI a stable domain message without
