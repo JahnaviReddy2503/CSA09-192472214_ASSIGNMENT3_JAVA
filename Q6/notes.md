@@ -13,9 +13,9 @@ between 0 and 1 in this run and printed the required sum 210.
 `wait()` is called while synchronized and in a while loop because wakeups can be
 spurious and another waiter may consume the condition first. `notifyAll()` wakes
 all producers/consumers; `sleep()` keeps a lock, whereas `wait()` releases it.
-The output's buffer-size log demonstrates the guarded range. The while-to-if
-experiment produced `while->if sums: 5+7 = 12` and negative buffer sizes, showing
-why `if` is unsafe.
+The output's buffer-size log demonstrates the guarded range 0..1, within the
+capacity-five bound. The real while-to-if experiment used one consumer and
+produced `while->if sums: 210 = 210`, also staying within 0..5.
 
 ## Student B
 The deadlock pair locks A then B and B then A. Coffman conditions: mutual
@@ -29,6 +29,6 @@ condition loops and notifications ensure producer-consumer progress.
 
 ## Alternative Concept and Complexity Analysis
 `ArrayBlockingQueue<Integer>(5)` encapsulates the buffer with O(1) put/take and
-O(5) space. Its measured three-run average for 20 puts/takes was **930,300 ns**.
+O(5) space. Its measured three-run average for 20 puts/takes was **4,619,166 ns**.
 `tryLock(timeout)` can provide bounded transfer waiting and is less error-prone
 than hand-written monitor protocols.

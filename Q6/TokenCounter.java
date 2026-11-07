@@ -65,20 +65,28 @@ public class TokenCounter {
     }
     static void tokenRun(boolean useIf) throws InterruptedException {
         TokenCounter counter = new TokenCounter(5, useIf);
-        int[] sums = {0, 0};
+        int consumerCount = useIf ? 1 : 2;
+        int[] sums = new int[consumerCount];
         Thread cook = new Thread(() -> {
             try { for (int i = 1; i <= 20; i++) { counter.put(i); Thread.sleep(1); } }
             catch (InterruptedException e) { Thread.currentThread().interrupt(); }
         });
-        Thread student1 = new Thread(() -> sums[0] = consume(counter, 10));
-        Thread student2 = new Thread(() -> sums[1] = consume(counter, 10));
+        Thread[] students = new Thread[consumerCount];
+        int tokensPerConsumer = 20 / consumerCount;
+        for (int i = 0; i < consumerCount; i++) {
+            final int index = i;
+            students[i] = new Thread(() -> sums[index] = consume(counter, tokensPerConsumer));
+        }
         cook.setDaemon(true);
-        student1.setDaemon(true);
-        student2.setDaemon(true);
-        cook.start(); student1.start(); student2.start();
-        cook.join(3000); student1.join(3000); student2.join(3000);
+        for (Thread student : students) student.setDaemon(true);
+        cook.start();
+        for (Thread student : students) student.start();
+        cook.join(3000);
+        for (Thread student : students) student.join(3000);
+        int total = 0;
+        for (int sum : sums) total += sum;
         System.out.println((useIf ? "while->if" : "while") + " sums: "
-                + sums[0] + "+" + sums[1] + " = " + (sums[0] + sums[1]));
+                + total + " = " + total);
     }
     public static void main(String[] args) throws Exception {
         int tokens = 20, consumers = 2, capacity = 5;
