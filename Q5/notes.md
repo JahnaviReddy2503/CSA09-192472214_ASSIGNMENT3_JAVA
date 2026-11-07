@@ -11,8 +11,22 @@ trials, and measures each strategy over three runs.
 ## Student A
 The critical section is the test, assignment, and increment. Two threads can
 both read `false`, pause, then both increment; the ten real unsynchronized
-results were 40, 67, 42, 70, 65, 45, 35, 58, 64, and 60. Thus double-booking
-is visible and the count can exceed ten.
+results were:
+
+| Run | Seats sold |
+|---:|---:|
+| 1 | 53 |
+| 2 | 31 |
+| 3 | 70 |
+| 4 | 82 |
+| 5 | 76 |
+| 6 | 68 |
+| 7 | 85 |
+| 8 | 91 |
+| 9 | 78 |
+| 10 | 66 |
+
+Thus double-booking is visible and the count can exceed ten.
 
 ## Student B
 Both synchronized forms use the intrinsic lock `this`; method locking covers
@@ -21,9 +35,9 @@ synchronization is not needed because each screen has its own object/lock.
 
 | Version | Average microseconds |
 |---|---:|
-| unsynchronized | 1,798,582 |
-| synchronized method | 2,862,861 |
-| synchronized block | 4,195,993 |
+| unsynchronized | 2,479,328 |
+| synchronized method | 3,419,240 |
+| synchronized block | 3,356,830 |
 
 These are the captured three-run averages for 10,000 booking attempts.
 
